@@ -69,8 +69,9 @@ def user_interface():
             print ('Please use only numbers')
 
     #Generate file path
-    download_dir  = download_dir + artist + '/' + album
+    download_dir  += artist + '/' + album
     print('Tracks will be placed in: ' + download_dir)
+    download_dir += '/'
 
     #Get track info from user
     while (True):
@@ -128,8 +129,10 @@ thread2.start()
 
 #Get the download
 search_query = ''
+working_track = 0
 while True:
 
+    working_track += 1
     #Wait for selenium to start
     while selenium_started == 0:
         time.sleep(0.2)
@@ -144,7 +147,7 @@ while True:
         break
     
     #Search Youtube for requested song
-    search_query = 'https://www.youtube.com/results?search_query=' + track_name[tracks_added] + '+' + artist + '+' + album
+    search_query = 'https://www.youtube.com/results?search_query=' + track_name[working_track] + '+' + artist + '+' + album
     search_results = requests.get(search_query).text
 
     #Search Youtube page for video links
@@ -198,7 +201,7 @@ while True:
         correct_link = download_link.count('y2mate.com/?file')
 
     #Create a file name for the track
-    file_name = track_name[tracks_added] + ' - ' + artist
+    file_name = track_name[working_track] + ' - ' + artist
 
     #Remove 's' from 'https' so that the script works. Don't ask me why, I don't know, but it works
     download_link = download_link.replace('https', 'http')
@@ -219,8 +222,9 @@ while True:
             if chunk:
                 file.write(chunk)
 
+    #Add tags to mp3 files
     mp3file = MP3(download_dir + file_name + '.mp3', ID3=EasyID3)
-    mp3file['title'] = [track_name]
+    mp3file['title'] = [track_name[working_track]]
     mp3file['albumartist'] = [artist]
     mp3file['artist'] = [artist]
     mp3file['album'] = [album]
@@ -228,9 +232,10 @@ while True:
     mp3file['date'] = [release_date]
     mp3file.save() 
     
-
+    #Move on to the next item in queue
     queued_items -= 1
 
+#Close out program
 print ('Saving...')
 driver.quit()
 os.remove('geckodriver.log')
